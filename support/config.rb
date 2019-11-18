@@ -7,7 +7,8 @@ class Configuration
     :xcodeSigningId, :udid, :bundleId, :updatedWDABundleId,
     :addMobileDesiredCapabilities, :automationName, :useNewWDA, :serverLogLevel,
     :screenshotPath, :timeStartAppiumServer, :cleanStart, :testUILogLevel,
-    :chromeDriverPort, :systemPort
+    :chromeDriverPort, :systemPort, :automationType, :noReset, :remote, :os,
+    :osVersion, :resolution, :sessionName, :browserVersion
 
   attr_reader :ANDROID_REAL_BROWSER, :ANDROID_EMULATOR_BROWSER,
   :ANDROID_REAL_APP, :ANDROID_EMULATOR_APP, :SELENIUM,
@@ -23,11 +24,11 @@ class Configuration
     @IOS_BROWSER = 'ios_browser'.freeze
     @IOS_APP = 'ios_browser'.freeze
 
-    @baseUrl = ""
+    @baseUrl = nil
     @timeout = 5
     @useAllure = false
-    @chromeDriverPath = ""
-    @screenshotPath = ""
+    @chromeDriverPath = nil
+    @screenshotPath = nil
     @cleanStart = true
     # @testUILogLevel = LogLevel.INFO
     # @addMobileDesiredCapabilities = new DesiredCapabilities()
@@ -35,16 +36,22 @@ class Configuration
 
     # selenium
     @browser = "chrome"
+    @browserVersion = nil
+    @remote = nil
+    @os = nil
+    @osVersion = nil
+    @resolution = nil
+    @sessionName = nil
+
 
 
     # mobile
-    @deviceTests = true
     @driver = 1
     @baseAppiumPort = 9586
     @baseAppiumBootstrapPort = 5333
     @launchAppTimeout = 20000
-    @appiumUrl = ""
-    @automationName = ""
+    @appiumUrl = nil
+    @automationName = nil
     @serverLogLevel = "error"
     @timeStartAppiumServer = 20
     @noReset = false
@@ -55,27 +62,26 @@ class Configuration
     @useEmulators = true
     @installMobileChromeDriver = true
 
-    @appPackage = ""
-    @appActivity = ""
-    @androidDeviceName = ""
-    @androidAppPath = ""
-    @androidVersion = ""
-    @emulatorName = ""
+    @appPackage = nil
+    @appActivity = nil
+    @androidDeviceName = nil
+    @androidAppPath = nil
+    @androidVersion = nil
+    @emulatorName = nil
 
     @chromeDriverPort = 0
     @systemPort = 0
 
 
     # ios
-    @iOSVersion = ""
-    @iOSAppPath = ""
-    @iOSDeviceName = ""
-    @iOSTesting = false
-    @xcodeOrgId = ""
-    @xcodeSigningId = ""
-    @udid = ""
-    @bundleId = ""
-    @updatedWDABundleId = ""
+    @iOSVersion = nil
+    @iOSAppPath = nil
+    @iOSDeviceName = nil
+    @xcodeOrgId = nil
+    @xcodeSigningId = nil
+    @udid = nil
+    @bundleId = nil
+    @updatedWDABundleId = nil
     @useNewWDA = true
     @wdaLocalPort = nil
   end

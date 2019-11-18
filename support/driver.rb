@@ -1,14 +1,22 @@
 require 'appium_lib'
+require 'webdrivers'
+require 'selenium-webdriver'
+require 'pp'
 require_relative './config'
 
 class DriverInitializer
-
   def initialize(configuration)
-    # deviceTests
-    # iOSTesting
-    # androidDeviceName/emulatorName
     opts = define_opts(configuration)
+    pp opts
+    if configuration.automationType == configuration.SELENIUM
+      @driver = initialize_selenium_driver(configuration, opts)
+    else
+      @driver = initialize_appium_driver(opts)
+    end
+  end
 
+  def get_driver
+    @driver
   end
 
   def define_opts(configuration)
@@ -49,13 +57,13 @@ class DriverInitializer
   end
 
   def opts_android_real_browser(configuration)
-    if configuration.automationName.isEmpty?
+    if configuration.automationName.empty?
       configuration.automationName = 'UiAutomator2'
     end
     return {
       caps: {
         platformName:           'Android',
-        automationName:         configuration.automationName
+        automationName:         configuration.automationName,
         deviceName:             configuration.androidDeviceName,
         udid:                   configuration.udid,
         systemPort:             configuration.systemPort,
@@ -63,7 +71,7 @@ class DriverInitializer
         chromedriverPort:       configuration.chromeDriverPort,
         chromedriverExecutable: configuration.chromeDriverPath,
         nativeWebScreenshot:    true,
-        chromeOptions:          { "w3c" => false }
+        chromeOptions:          { "w3c" => false },
       },
       appium_lib: {
         server_url: configuration.appiumUrl
@@ -72,7 +80,7 @@ class DriverInitializer
   end
 
   def opts_android_real_app(configuration)
-    if configuration.automationName.isEmpty?
+    if configuration.automationName.empty?
       configuration.automationName = 'UiAutomator2'
     end
     return {
@@ -95,21 +103,19 @@ class DriverInitializer
   end
 
   def opts_android_emulator_browser(configuration)
-    if configuration.automationName.isEmpty?
+    if configuration.automationName.empty?
       configuration.automationName = 'UiAutomator2'
     end
     return {
       caps: {
         platformName:            'Android',
-          automationName:        configuration.automationName,
-        deviceName:              configuration.androidDeviceName,
+        automationName:          configuration.automationName,
+        deviceName:              configuration.emulatorName,
         avd:                     configuration.emulatorName,
-        app:                     configuration.androidAppPath,
-        appPackage:              configuration.appPackage,
-        appActivity:             configuration.appActivity,
         systemPort:              configuration.systemPort,
         noReset:                 configuration.noReset,
-        chromeDriverPort:        configuration.chromeDriverPort
+        chromeDriverPort:        configuration.chromeDriverPort,
+        browserName:             'chrome',
       },
       appium_lib: {
         server_url: configuration.appiumUrl
@@ -118,21 +124,20 @@ class DriverInitializer
   end
 
   def opts_android_emulator_app(configuration)
-    if configuration.automationName.isEmpty?
+    if configuration.automationName.empty?
       configuration.automationName = 'UiAutomator2'
     end
     return {
       caps: {
         platformName:       'Android',
         automationName:     configuration.automationName,
-        deviceName:         configuration.androidDeviceName,
+        deviceName:         configuration.emulatorName,
         avd:                configuration.emulatorName,
         app:                configuration.androidAppPath,
         appPackage:         configuration.appPackage,
         appActivity:        configuration.appActivity,
         systemPort:         configuration.systemPort,
         noReset:            configuration.noReset,
-        chromeDriverPort:   configuration.chromeDriverPort
       },
       appium_lib: {
         server_url: configuration.appiumUrl
@@ -141,7 +146,7 @@ class DriverInitializer
   end
 
   def opts_ios_browser(configuration)
-    if configuration.automationName.isEmpty?
+    if configuration.automationName.empty?
       configuration.automationName = 'UiAutomator2'
     end
     return {
@@ -151,7 +156,7 @@ class DriverInitializer
         deviceName:    configuration.iOSDeviceName,
         udid:          configuration.udid,
         app:           configuration.iOSAppPath,
-        useNewWDA:     configuration.useNewWDA
+        useNewWDA:     configuration.useNewWDA,
         noReset:       configuration.noReset,
       },
       appium_lib: {
@@ -161,7 +166,7 @@ class DriverInitializer
   end
 
   def opts_ios_app(configuration)
-    if configuration.automationName.isEmpty?
+    if configuration.automationName.empty?
       configuration.automationName = 'UiAutomator2'
     end
     return {
@@ -170,7 +175,7 @@ class DriverInitializer
         deviceName:    configuration.iOSDeviceName,
         udid:          configuration.udid,
         app:           configuration.iOSAppPath,
-        useNewWDA:     configuration.useNewWDA
+        useNewWDA:     configuration.useNewWDA,
         noReset:       configuration.noReset,
       },
       appium_lib: {
@@ -179,32 +184,38 @@ class DriverInitializer
     }
   end
 
-  def opts_selenium
-
+  def opts_selenium(configuration)
+    caps = Selenium::WebDriver::Remote::Capabilities.new
+    caps[:browser_name] = configuration.browser
+    configuration.browserVersion ? caps[:version] = configuration.browserVersion : nil
+    configuration.os ? caps[:platform] = configuration.os : nil
+    configuration.osVersion ? caps[:os_version] = configuration.osVersion : nil
+    configuration.resolution ? caps[:resolution] = configuration.resolution : nil
+    configuration.sessionName ? caps[:name] = configuration.sessionName : nil
+    return caps
   end
 
+  def initialize_selenium_driver(configuration, opts)
+    if configuration.remote.empty?
+      case configuration.browser
+      when 'chrome'
+        return Selenium::WebDriver.for :chrome
+      else
+        raise "Bad browser name: #{configuration.browser}"
+      end
+    else
+      case configuration.browser
+      when 'chrome'
+        return Selenium::WebDriver.for :remote, url: configuration.remote, desired_capabilities: opts
+      else
+        raise "Bad browser name: #{configuration.browser}"
+      end
+    end
+  end
 
+  def initialize_appium_driver(opts)
+    driver = Appium::Driver.new(opts, true)
+    Selenium::WebDriver.logger.level = :error
+    return driver
+  end
 end
-
-
-
-
-
-
-
-
-  opts = {
-    caps: {
-      platformName:  'Android',
-      deviceName:    'something',
-      # avd:           "#{ENV['DEVICE']}",
-      # udid:           "#{ENV['DEVICE']}",
-      app:           '/Users/edgarsavotins/Downloads/kayak.apk',
-    },
-    appium_lib: {
-      server_url: "http://localhost:#{ENV['PORT']}/wd/hub"
-    }
-  }
-
-  $driver = Appium::Driver.new(opts, true)
-  Selenium::WebDriver.logger.level = :error
